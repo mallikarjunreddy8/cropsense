@@ -161,6 +161,20 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
 .ranges { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; font-variant-numeric: tabular-nums; }
 .ranges td { padding: 8px 2px; border-bottom: 1px solid var(--line); }
 .ranges td:last-child { text-align: right; font-family: var(--font-num); font-size: 13px; }
+.pick { display: grid; gap: 8px; padding: 12px 14px; }
+.pick select { appearance: auto; font-weight: 600; }
+.reqs { display: grid; gap: 0; margin-top: 6px; }
+.req { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 10px 0; }
+.req + .req { border-top: 1px solid var(--line); }
+.req .ico { grid-row: 1 / 3; }
+.req .nm { font-weight: 600; font-size: 14px; }
+.req .rg { color: var(--muted); font-size: 12px; font-family: var(--font-num); grid-column: 2; }
+.req .val { grid-row: 1 / 3; grid-column: 3; text-align: right; }
+.req .val b { display: block; font-family: var(--font-display); font-size: 1.35rem; line-height: 1.1; }
+.req .val b small { font-family: var(--font-body); font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+.req .you { font-size: 12px; white-space: nowrap; }
+.req .you.ok { color: var(--leaf); }
+.req .you.bad { color: var(--warn); }
 .dhead { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: center; }
 .dhead .b { width: 64px; height: 64px; font-size: 32px; border-radius: 18px; }
 .dhead .name { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; line-height: 1.1; }
@@ -209,6 +223,10 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
 
   <!-- RECOMMEND -->
   <section class="screen pad" id="scr-home">
+    <div class="card pick">
+      <label class="label" for="cropPick" data-t="pickCrop"></label>
+      <select id="cropPick" class="search"></select>
+    </div>
     <div>
       <div class="label" data-t="examples"></div>
       <div class="presets" id="presets" style="margin-top:8px"></div>
@@ -263,7 +281,7 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
     <div class="facts" id="dFacts"></div>
     <div class="card">
       <h2 data-t="idealRanges"></h2>
-      <table class="ranges" id="dRanges"></table>
+      <div class="reqs" id="dRanges"></div>
     </div>
     <button type="button" class="btn pri" id="dUse" data-t="useTypical"></button>
   </section>
@@ -303,7 +321,7 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
   const M = JSON.parse(document.getElementById('model').textContent);
   const RANGES = JSON.parse(document.getElementById('ranges').textContent);
   const SV = M.SV, nF = M.features.length;
-  const APP_VERSION = '2';
+  const APP_VERSION = '3';
 
   // ---------- text in 3 languages ----------
   const T = {
@@ -317,7 +335,9 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
       alsoSuit: 'Other crops that suit this field', noOther: 'No other crop matches these conditions.',
       svmTop: 'SVM top 3', good: 'Good fit', possible: 'Possible', share: 'Share', save: 'Save',
       saved: 'Saved to History', copied: 'Result copied', crops22: '22 crops the model knows', search: 'Search crops',
-      idealRanges: 'Grows best in', useTypical: 'Try these values', tabHome: 'Advice', tabCrops: 'Crops', tabHistory: 'History',
+      idealRanges: 'What this crop needs (all 7)', useTypical: 'Fill these 7 values in my field',
+      pickCrop: 'Or pick a crop to see all 7 values it needs', pickPlaceholder: 'Choose a crop…',
+      range: 'range', yours: 'yours', tooLow: 'low', tooHigh: 'high', tabHome: 'Advice', tabCrops: 'Crops', tabHistory: 'History',
       histEmpty: 'No saved fields yet. Open a result and tap Save to keep it here.', open: 'Open', del: 'Delete', deleted: 'Deleted',
       match: '{n} of 7 conditions in range',
       tips: {
@@ -350,7 +370,9 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
       alsoSuit: 'ఈ పొలానికి సరిపోయే ఇతర పంటలు', noOther: 'ఈ పరిస్థితులకు సరిపోయే ఇంకో పంట లేదు.',
       svmTop: 'SVM టాప్ 3', good: 'బాగా సరిపోతుంది', possible: 'సాధ్యం', share: 'షేర్', save: 'సేవ్',
       saved: 'చరిత్రలో సేవ్ అయింది', copied: 'ఫలితం కాపీ అయింది', crops22: 'మోడల్‌కు తెలిసిన 22 పంటలు', search: 'పంటను వెతకండి',
-      idealRanges: 'బాగా పెరిగే పరిస్థితులు', useTypical: 'ఈ విలువలు వాడండి', tabHome: 'సలహా', tabCrops: 'పంటలు', tabHistory: 'చరిత్ర',
+      idealRanges: 'ఈ పంటకు కావలసినవి (మొత్తం 7)', useTypical: 'ఈ 7 విలువలు నా పొలంలో నింపండి',
+      pickCrop: 'లేదా పంటను ఎంచుకుని దానికి కావలసిన 7 విలువలు చూడండి', pickPlaceholder: 'పంటను ఎంచుకోండి…',
+      range: 'పరిధి', yours: 'మీది', tooLow: 'తక్కువ', tooHigh: 'ఎక్కువ', tabHome: 'సలహా', tabCrops: 'పంటలు', tabHistory: 'చరిత్ర',
       histEmpty: 'ఇంకా సేవ్ చేసిన పొలాలు లేవు. ఫలితం తెరిచి సేవ్ నొక్కండి.', open: 'తెరవండి', del: 'తొలగించు', deleted: 'తొలగించబడింది',
       match: '7 లో {n} పరిస్థితులు సరిపోయాయి',
       tips: {
@@ -383,7 +405,9 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
       alsoSuit: 'इस खेत के लिए अन्य उपयुक्त फसलें', noOther: 'इन हालात के लिए कोई दूसरी फसल नहीं।',
       svmTop: 'SVM टॉप 3', good: 'बहुत उपयुक्त', possible: 'संभव', share: 'शेयर', save: 'सेव करें',
       saved: 'इतिहास में सेव हुआ', copied: 'नतीजा कॉपी हुआ', crops22: 'मॉडल की 22 फसलें', search: 'फसल खोजें',
-      idealRanges: 'सबसे अच्छी पैदावार की स्थिति', useTypical: 'ये मान आज़माएँ', tabHome: 'सलाह', tabCrops: 'फसलें', tabHistory: 'इतिहास',
+      idealRanges: 'इस फसल को क्या चाहिए (सभी 7)', useTypical: 'ये 7 मान मेरे खेत में भरें',
+      pickCrop: 'या फसल चुनें और उसके सभी 7 ज़रूरी मान देखें', pickPlaceholder: 'फसल चुनें…',
+      range: 'सीमा', yours: 'आपका', tooLow: 'कम', tooHigh: 'ज़्यादा', tabHome: 'सलाह', tabCrops: 'फसलें', tabHistory: 'इतिहास',
       histEmpty: 'अभी कोई सेव खेत नहीं। नतीजा खोलकर सेव दबाएँ।', open: 'खोलें', del: 'हटाएँ', deleted: 'हटाया गया',
       match: '7 में से {n} स्थितियाँ सही',
       tips: {
@@ -630,9 +654,18 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
     openC = c; cropBack = from;
     $('dHead').innerHTML = badge(c) + '<div><div class="name">' + cname(c) + '</div>' + (lang !== 'en' ? '<div class="en">' + enName(c) + '</div>' : '') + '</div>';
     $('dFacts').innerHTML = factsHtml(c);
-    $('dRanges').innerHTML = META.map(m => { const r = RANGES[c][fi(m.key)];
-      return '<tr><td>' + T[lang].feat[m.key] + '</td><td>' + nice(r[0]) + ' – ' + nice(r[1]) + (m.unit ? ' ' + m.unit : '') + '</td></tr>'; }).join('');
-    $('backCrops').querySelector('span').textContent = from === 'result' ? t('best') : t('tabCrops');
+    const prof = M.profile[M.crops.indexOf(c)];
+    $('dRanges').innerHTML = META.map(m => {
+      const j = fi(m.key), r = RANGES[c][j], you = state[m.key];
+      const st = you < r[0] ? 'low' : (you > r[1] ? 'high' : 'ok');
+      return '<div class="req"><span class="ico" style="background:' + m.color + '">' + m.ab + '</span>' +
+        '<span class="nm">' + T[lang].feat[m.key] + '</span>' +
+        '<span class="rg">' + t('range') + ' ' + nice(r[0]) + '–' + nice(r[1]) + (m.unit ? ' ' + m.unit : '') + '</span>' +
+        '<span class="val"><b>' + nice(+prof[j]) + (m.unit ? '<small>' + m.unit + '</small>' : '') + '</b>' +
+        '<span class="you ' + (st === 'ok' ? 'ok' : 'bad') + '">' + t('yours') + ' ' + nice(you) + ' ' +
+        (st === 'ok' ? '✓' : (st === 'low' ? '↓ ' + t('tooLow') : '↑ ' + t('tooHigh'))) + '</span></span></div>';
+    }).join('');
+    $('backCrops').querySelector('span').textContent = from === 'result' ? t('best') : (from === 'home' ? t('tabHome') : t('tabCrops'));
     show('crop');
   }
   $('dUse').addEventListener('click', () => {
@@ -640,7 +673,13 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
     META.forEach(m => { state[m.key] = +(+prof[fi(m.key)]).toFixed(m.step < 1 ? 1 : 0); });
     presetIdx = -1; syncInputs(); markPreset(); update(); show('home');
   });
-  $('backCrops').addEventListener('click', () => show(cropBack === 'result' ? 'result' : 'crops'));
+  $('backCrops').addEventListener('click', () => show(cropBack === 'result' ? 'result' : (cropBack === 'home' ? 'home' : 'crops')));
+  function fillPick() {
+    $('cropPick').innerHTML = '<option value="">' + t('pickPlaceholder') + '</option>' +
+      M.crops.slice().sort((a, b) => cname(a).localeCompare(cname(b)))
+        .map(c => '<option value="' + c + '">' + (CROP[c].icon ? CROP[c].icon + ' ' : '') + cname(c) + '</option>').join('');
+  }
+  $('cropPick').addEventListener('change', e => { const c = e.target.value; if (c) { openCrop(c, 'home'); e.target.value = ''; } });
 
   // ---------- history ----------
   function renderHistory() {
@@ -683,7 +722,7 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
   const SCREENS = ['home', 'result', 'crops', 'crop', 'history'];
   function show(name) {
     SCREENS.forEach(s => { $('scr-' + s).hidden = s !== name; });
-    const tab = name === 'result' ? 'home' : (name === 'crop' ? 'crops' : name);
+    const tab = name === 'result' ? 'home' : (name === 'crop' ? (cropBack === 'crops' ? 'crops' : 'home') : name);
     document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.go === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     $('peek').hidden = name !== 'home';
     if (name === 'result') renderResult();
@@ -703,6 +742,7 @@ nav.tabs button[aria-current="page"] { color: var(--leaf); font-weight: 600; }
     META.forEach(m => { inputs[m.key].label.innerHTML = T[lang].feat[m.key] + (m.unit ? ' <small>' + m.unit + '</small>' : ''); });
     presetBox.querySelectorAll('button').forEach((b, i) => { b.textContent = T[lang].presets[i]; });
     $('cropSearch').placeholder = t('search');
+    fillPick();
     $('aboutLine').textContent = 'RBF SVM · C=' + M.C + ', γ=' + M.gamma + ' · 99.32% test accuracy · v' + APP_VERSION;
     update();
     const vis = SCREENS.find(s => !$('scr-' + s).hidden);
